@@ -1,0 +1,21 @@
+<!Doctype html>
+<html>
+    <head>
+        <meta charset='utf-8'>
+        <title>markdown</title>
+        <link rel='stylesheet' type='text/css' href='/src/css/markdown.css' />
+        <link rel='stylesheet' type='text/css' href='/lib/prettify/prettify.css' />
+    </head>
+    <body>
+        <%- data %>
+        <script type='text/javascript' src='/lib/prettify/prettify.js'></script>
+        <script type="text/javascript">
+            function highlight(){
+                var pres=document.getElementsByTagName('pre');
+                for(var i=0,l=pres.length;i<l;i++) pres[i].className+=' prettyprint';
+                prettyPrint();
+            }
+            window.onload=highlight;
+        </script>
+    </body>
+</html>

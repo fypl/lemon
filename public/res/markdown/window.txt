@@ -1,0 +1,173 @@
+window - 窗体控件
+===============
+窗体控件，现在的网页上都会跳出一个对话窗体让用户进行确认，输入交互等，这时用window控件是最完美的，可在以allocate　窗体时加一个遮罩，使用户不能点击窗体以外的东西窗体制作步骤是
+
+1.在__initXGui指定css_seed，和html_seed，html_seed是卡片的html结构种子，在_$addNodeTemplate会返回这人种子如果在html结构里有定义的css样式，在这里可以不设置css_seed
+
+2.在__initNode获取节点和添加事件
+
+3.在事件回调中，如果要通知外面模块，需要分发自定义事件出去
+
+4.窗体上一般都有确认按钮和取消按钮，在用户点击确认和取消时给窗体做隐藏，如查在生成窗体里传入的是destroyable为true,窗体在隐藏时进行回收
+
+如：
+
+![窗体控件](/res/image/window.png "示例")
+
+Allocate 
+---------------
+window控件父类所在脚本
+{lib}ui/layer/window.wrapper.js
+
+页面结构上需要在html 和body上加上height:100%的样式，否则窗体会绝对的垂直和水平居中，并不一定在用户的可视范围之内
+
+
+从卡片需要从window.wrapper.js继承，并按上面的方式重写结构的事情
+
+    var f = function(){
+        var _  = NEJ.P,
+            _e = _('nej.e'),
+            _o = NEJ.P('nej.o'),
+            _v = NEJ.P('nej.v'),
+            _ui = NEJ.P('nej.ui'),
+            _p = _('nej.demo'),
+            _proCustWindow,
+            _supCustWindow;
+        var _seed_css = _e._$pushCSSText('.#<uispace>{background:#fff;line-height:26px;width:400px;}\
+                .#<uispace> .itm{color:#000;padding:40px 0;cursor:pointer}\
+                .#<uispace> .btns{border-top:1px solid #ccc;padding:10px 0}\
+                .#<uispace> .okbtn,.#<uispace> .ccbtn{border:1px solid #ccc;padding:4px 8px;margin-right:20px}');
+            // ui html code
+            var _seed_html = _e._$addNodeTemplate('<div class="'+_seed_css+'">\
+                                                        <div class="itm pnt">窗体应用</div>\
+                                                        <div class="btns"><input type="button" value="确定" class="okbtn"/><input type="button" value="取消"  class="ccbtn"/></div>\
+                                                   </div>');
+        
+        
+        _p._$$CustWindow = NEJ.C();
+        _proCustWindow = _p._$$CustWindow._$extend(_ui._$$WindowWrapper, !0);
+        _supCustWindow = _p._$$CustWindow.prototype;
+        
+        /**
+         * 初始化外观信息
+         * 
+         * @return {Void}
+         */
+        _proCustWindow.__initXGui = function() {
+            this.__seed_css = _seed_css;
+            this.__seed_html = _seed_html;
+        };
+        /**
+         * 控件重置
+         * 
+         * @param {Object}
+         *            _options 可选配置参数 
+         *              itemclick   卡片点击回调
+         * @return {Void}
+         */
+        _proCustWindow.__reset = function(_options) {
+            this.__supReset(_options);
+        };
+        /**
+         * 初始化节点
+         * 
+         * @return {Void}
+         */
+        _proCustWindow.__initNode = function() {
+            this.__supInitNode();
+            var _ntmp = this.__body.getElementsByTagName('input');
+            _v._$addEvent(_ntmp[0], 'click', this.__onOKClick._$bind(this));
+            _v._$addEvent(_ntmp[1], 'click', this.__onCCClick._$bind(this));
+        };
+        /**
+         * 
+         */
+        _proCustWindow.__onOKClick = function(){
+            this._$dispatchEvent('onok');
+            this._$hide();
+        };
+        /**
+         * 
+         */
+        _proCustWindow.__onCCClick = function(){
+            this._$hide();
+        };
+    };
+    define('{pro}js/window.js', ['{lib}ui/layer/window.wrapper.js'], f);
+
+上面的_$$CustWindow是从card.wrapper.js继承过来，如前所述，只在给相关的方法里进行逻辑处理
+
+Allocate window
+---------------
+
+    var f = function(){
+        var _  = NEJ.P,
+            _e = _('nej.e'),
+            _v = _('nej.v'),
+            _tu = _('t.u'),
+            _p = _('nej.demo'),
+            _window;
+         
+        var _input = _e._$get('input');
+        
+        _v._$addEvent(_input,'click',onWindowClick);
+        
+        function onWindowClick(_event){
+            _v._$stop(_event);
+            if(!!_window)_window._$recycle();
+            _window = _p._$$CustWindow._$allocate({onok:onOKClick,destroyable:true,parent:document.body,mask:true,draggable:true,clazz:'w-win'})._$show();
+        }
+        function onOKClick(){
+            _tu._$log('onok','onclick')
+        }
+        _tu._$processCode();
+    }
+    define(['{pro}js/window.js', '{pro}js/extend.js'],f);
+
+Explain
+---------------
+窗体的隐藏是通过document上的click事件进行隐藏，如果在allocate卡片时，传入参数是destroyable为true，在隐藏(调用_$hide)时卡片就会被回收掉
+
+窗体在allocate出来可以传入相对应的参数进行位置，遮罩的调整：
+
+title     [String]   - 窗口标题
+
+align     [String]   - 相对于视窗位置定义，横向+空格+纵向，默认为center middle
+
+                      横向 - left/center/right/auto
+                      
+                      纵向 - top/middle/bottom/auto
+                      
+draggable [Boolean]  - 是否可拖拽
+
+mask      [nej.ui._$$Mask|Boolean|String] 
+
+                    - 盖层信息
+                    
+                      如果是nej.ui._$$Mask的子类则为盖层构造
+                      
+                      如果是布尔值，则使用默认盖层
+                      
+                      如果是字符串，则为盖层样式
+                      
+onclose   [Function] - 关闭窗体触发事件
+
+更多的参数信息请参照card.wrapper.js
+
+Recycle
+---------------
+_window._$recycle() 窗体的回收多数都是内部触发，窗体的现出，使document上的其他地方的点击都是无效的，在窗体的取消，关系，确定的情况下进行窗体的隐藏和回收
+
+card external interface
+---------------
+_$show()    显示窗体
+
+_$hide()    隐藏窗体
+
+
+Known Issues
+--------------- 
+
+Demo
+--------------- 
+[window控件demo](/code/10007/ "window控件demo")
