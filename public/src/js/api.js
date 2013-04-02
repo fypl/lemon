@@ -8,7 +8,6 @@ var f=function(){
 		_$init:function(){
 			this.__initNode();
 			this.__initEvent();
-			this.__initNav();
 		},
 		__initNode:function(){
 			this.nav=nes.one('.m-nav');
@@ -16,18 +15,6 @@ var f=function(){
 		},
 		__initEvent:function(){
 			_v._$addEvent(this.nav, 'click', this.__linkClick._$bind(this));
-		},
-		__initNav:function(){
-			_j._$request('/res/api/nav.html',{
-				method:'get',
-				type:'text',
-				onload:function(data){
-					this.nav.innerHTML=data;
-				}._$bind(this),
-				onerror:function(){
-					this.nav.innerHTML='something happened in loading nav!';
-				}._$bind(this),
-			});
 		},
 		__linkClick:function(evt){
 			evt = evt || window.evt;
